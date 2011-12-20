@@ -12,6 +12,7 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Looper;
 import android.provider.MediaStore;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
@@ -126,56 +127,64 @@ public class LinkToFileActivity extends ActionBarActivity implements OnItemClick
     	}
     }
     
-	private class DisplayAddNewDialogTask extends AsyncTask<Intent, Void, Void> {
+	private class DisplayAddNewDialogTask extends AsyncTask<Intent, Void, Boolean> {
 
 		@Override
-		protected Void doInBackground(Intent... arg0) {
-			showCreateNewDialog(arg0[0]);
-			return null;
+		protected void onPostExecute(Boolean result) {
+			if (!result) {
+				Log.d(TAG, "Failed to resolve file type");
+				Toast.makeText(getApplicationContext(), "Failed to resolve file type", 3000).show();
+			}
+		}
+		
+		@Override
+		protected Boolean doInBackground(Intent... arg0) {
+			
+			// Resolve file path
+			Intent intent = arg0[0];
+			Uri uri = intent.getData();
+			String scheme = uri.getScheme();
+			String path = null;
+			String fileName;
+			if (scheme.equals("file")) {
+				path = uri.getPath();
+				fileName = uri.getLastPathSegment();
+			} else if(scheme.equals("content")) {
+				path = getRealPathFromURI(uri);
+				fileName = path.substring(path.lastIndexOf("/") + 1);
+			} else {
+				return false;
+			}
+			
+			String mime = intent.resolveType(getApplicationContext());
+			if (mime == null) {
+				// try something else
+				String ext = fileName.substring(fileName.lastIndexOf(".") + 1);
+				mime = MimeTypeMap.getSingleton().getMimeTypeFromExtension(ext);
+			}
+			
+			if (mime == null) {
+				// Give up
+				return false;
+			}
+			
+			Log.d(TAG, path + " --- " + fileName);
+			
+		    // DialogFragment.show() will take care of adding the fragment
+		    // in a transaction.  We also want to remove any currently showing
+		    // dialog, so make our own transaction and take care of that here.
+			removeCreateNewDialog();
+			FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
+
+		    // Create and show the dialog.
+		    DialogFragment newFragment = CreateFileDialogFragment.newInstance("Add file", 
+		    		fileName, path,
+		    		mime);
+		    newFragment.show(ft, "dialog");
+			return true;
 		}
     }
     
-	private void showCreateNewDialog(Intent intent) {
-
-		// Resolve file path
-		Uri uri = intent.getData();
-		String scheme = uri.getScheme();
-		String path;
-		String fileName;
-		if (scheme.equals("file")) {
-			path = uri.getPath();
-			fileName = uri.getLastPathSegment();
-		} else if(scheme.equals("content")) {
-			path = getRealPathFromURI(uri);
-			fileName = path.substring(path.lastIndexOf("/") + 1);
-		} else {
-			Log.d(TAG, "Failed to resolve file path");
-			Toast.makeText(this, "Failed to resolve file path", 3000);
-			return;
-		}
-		
-		String mime = intent.resolveType(this);
-		if (mime == null) {
-			// try something else
-			String ext = fileName.substring(fileName.lastIndexOf(".") + 1);
-			mime = MimeTypeMap.getSingleton().getMimeTypeFromExtension(ext);
-		}
-		
-		Log.d(TAG, path + " --- " + fileName);
-		
-	    // DialogFragment.show() will take care of adding the fragment
-	    // in a transaction.  We also want to remove any currently showing
-	    // dialog, so make our own transaction and take care of that here.
-		removeCreateNewDialog();
-		FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
-
-	    // Create and show the dialog.
-	    DialogFragment newFragment = CreateFileDialogFragment.newInstance("Add file", 
-	    		fileName, path,
-	    		mime);
-	    newFragment.show(ft, "dialog");
-	}
-	
 	public String getRealPathFromURI(Uri contentUri) {
         String[] proj = { MediaStore.MediaColumns.DATA };
         //Cursor cursor = managedQuery(contentUri, proj, null, null, null);

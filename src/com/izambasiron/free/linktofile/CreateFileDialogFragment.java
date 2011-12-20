@@ -67,6 +67,9 @@ public class CreateFileDialogFragment extends DialogFragment implements DialogIn
     }
 
 	private int getIconForType(String mime) {
+		if (mime == null)
+			return R.drawable.document;
+		
 		String[] type = mime.split("/");
 		Log.d(TAG, type[0] + " == " + type[1]);
 		if (type[0].equalsIgnoreCase("image")) {

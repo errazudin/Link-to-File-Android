@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Link to File</string>
+    <string name="menu_add">Add new file</string>
+    <string name="admob_id">key</string>
+</resources>

@@ -3,6 +3,7 @@
     android:layout_height="fill_parent"
     android:weightSum="1"
     android:orientation="vertical"
+    android:id="@+id/main"
     >
     <GridView
 	    android:id="@+id/gridview"
@@ -16,12 +17,4 @@
 	    android:gravity="center"
 	    android:layout_weight="1"
 	/>
-    <com.google.ads.AdView
-	    xmlns:googleads="http://schemas.android.com/apk/lib/com.google.ads"
-	    android:id="@+id/ad"
-	    android:layout_width="fill_parent"
-	    android:layout_height="wrap_content"
-	    googleads:adSize="IAB_LEADERBOARD"
-	    googleads:adUnitId="@string/admob_id"
-	    android:layout_weight="0" />
 </LinearLayout>

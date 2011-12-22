@@ -12,33 +12,40 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.Looper;
 import android.provider.MediaStore;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
+import android.util.DisplayMetrics;
 import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup;
+import android.view.ViewGroup.LayoutParams;
 import android.webkit.MimeTypeMap;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.AdapterView.OnItemLongClickListener;
 import android.widget.GridView;
-import android.widget.TextView;
+import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import com.example.android.actionbarcompat.ActionBarActivity;
+import com.google.ads.Ad;
+import com.google.ads.AdListener;
 import com.google.ads.AdRequest;
+import com.google.ads.AdRequest.ErrorCode;
+import com.google.ads.AdSize;
 import com.google.ads.AdView;
 
-public class LinkToFileActivity extends ActionBarActivity implements OnItemClickListener, OnItemLongClickListener {
+public class LinkToFileActivity extends ActionBarActivity implements OnItemClickListener, 
+OnItemLongClickListener, AdListener {
 	private static final String TAG = "LinkToFileActivity";
 	private static final int PICK_A_FILE = 1;
+	private int adSizeId = 0;
+	private final AdSize[] adSize = new AdSize[] {AdSize.IAB_LEADERBOARD, AdSize.IAB_BANNER, AdSize.BANNER};
+	private AdView mAdView;
 	
 	private FilesAdapter filesAdapter;
 
@@ -53,8 +60,47 @@ public class LinkToFileActivity extends ActionBarActivity implements OnItemClick
         gridview.setOnItemClickListener(this);
         gridview.setOnItemLongClickListener(this);
         
-        AdView adView = (AdView) findViewById(R.id.ad);
-        AdRequest adRequest = new AdRequest();
+        // Decide which type of ad to display
+        LinearLayout layout = (LinearLayout)findViewById(R.id.main);
+        
+        DisplayMetrics metrics = new DisplayMetrics();
+        getWindowManager().getDefaultDisplay().getMetrics(metrics);
+        int width = (int) (metrics.widthPixels / metrics.density);
+        
+        createAdView(getAdSize(width-layout.getPaddingLeft()-layout.getPaddingRight()));
+    }
+    
+    private void createAdView(AdSize adSize) {
+    	if (mAdView != null) 
+    		mAdView.destroy();
+    	
+    	mAdView = new AdView(this, 
+        		adSize, 
+        		getResources().getString(R.string.admob_id));
+		mAdView.setAdListener(this);
+	    mAdView.loadAd(getAdRequest());
+	    mAdView.setLayoutParams(new LayoutParams(LayoutParams.FILL_PARENT, LayoutParams.WRAP_CONTENT));
+	    
+	    LinearLayout layout = (LinearLayout)findViewById(R.id.main);
+	    layout.addView(mAdView);
+    }
+    
+    private AdSize getAdSize(int width) {
+    	Log.d(TAG, "width - " + width);
+		if (width >= 728) {
+			adSizeId = 0;
+			return AdSize.IAB_LEADERBOARD;
+		} else if (width >= 468) {
+			adSizeId = 1;
+			return AdSize.IAB_BANNER;
+		} else {
+			adSizeId = 2;
+			return AdSize.BANNER;
+		}
+	}
+
+	private AdRequest getAdRequest() {
+    	AdRequest adRequest = new AdRequest();
         Set<String> set = new HashSet<String>();
         set.add("Video");
         set.add("Audio");
@@ -64,11 +110,12 @@ public class LinkToFileActivity extends ActionBarActivity implements OnItemClick
         set.add("Download");
         adRequest.setKeywords(set);
         adRequest.addTestDevice(AdRequest.TEST_EMULATOR);
-        adRequest.addTestDevice("3832CBF156DF00EC"); // My test phone
-        adView.loadAd(adRequest);
-    }
-    
-    @Override
+        adRequest.addTestDevice("CDC7E419D08AB3C1FDC54A441E862DB6"); // My test phone
+        adRequest.addTestDevice("E3954F9764F6B841A2C0E66E6BE8B8AE"); // My test tablet
+        return adRequest;
+	}
+
+	@Override
     protected void onDestroy() {
     	filesAdapter.close();
     	super.onDestroy();
@@ -285,5 +332,36 @@ public class LinkToFileActivity extends ActionBarActivity implements OnItemClick
 		AlertDialog alert = builder.create();
 		alert.show();
 		return false;
+	}
+
+	@Override
+	public void onDismissScreen(Ad arg0) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void onFailedToReceiveAd(Ad ad, ErrorCode code) {
+		Log.d(TAG, "Error code - " + code + adSizeId);
+		if (adSizeId < adSize.length) {
+			createAdView(adSize[adSizeId]);
+		    adSizeId++;
+		}
+	}
+
+	@Override
+	public void onLeaveApplication(Ad arg0) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void onPresentScreen(Ad arg0) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void onReceiveAd(Ad ad) {
 	}
 }

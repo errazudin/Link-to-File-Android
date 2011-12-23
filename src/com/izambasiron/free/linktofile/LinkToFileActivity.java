@@ -12,6 +12,7 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
 import android.provider.MediaStore;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
@@ -344,8 +345,14 @@ OnItemLongClickListener, AdListener {
 	public void onFailedToReceiveAd(Ad ad, ErrorCode code) {
 		Log.d(TAG, "Error code - " + code + adSizeId);
 		if (adSizeId < adSize.length) {
-			createAdView(adSize[adSizeId]);
-		    adSizeId++;
+			// I don't want my account to be blocked. Use delay.
+			Handler handler = new Handler(); 
+		    handler.postDelayed(new Runnable() { 
+		         public void run() { 
+		        	 createAdView(adSize[adSizeId]);
+		        	 adSizeId++;
+		         } 
+		    }, 10000);
 		}
 	}
 

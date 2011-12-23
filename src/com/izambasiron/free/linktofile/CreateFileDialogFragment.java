@@ -3,17 +3,22 @@ package com.izambasiron.free.linktofile;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.DialogInterface;
-import android.net.Uri;
+import android.graphics.Color;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.DialogFragment;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CheckBox;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 public class CreateFileDialogFragment extends DialogFragment implements DialogInterface.OnClickListener {
 	private static final String TAG = "CreateFileDialogFragment";
@@ -49,7 +54,7 @@ public class CreateFileDialogFragment extends DialogFragment implements DialogIn
     	String mime = getArguments().getString("mime");
 		View layout = inflater.inflate(R.layout.create_link_dialog, container, true);
 		
-		EditText nameText = (EditText) layout.findViewById(R.id.name);
+		final EditText nameText = (EditText) layout.findViewById(R.id.name);
 		nameText.setText(name);
 		
 		//change icon based on mime type
@@ -62,6 +67,46 @@ public class CreateFileDialogFragment extends DialogFragment implements DialogIn
 		uriText.setText(path);
 		TextView mimeText = (TextView) layout.findViewById(R.id.mime);
 		mimeText.setText("Type: "+mime);
+		
+		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.HONEYCOMB) {
+			((CheckBox) layout.findViewById(R.id.addShortcut)).setTextColor(Color.WHITE);
+			uriText.setTextColor(Color.WHITE);
+			mimeText.setTextColor(Color.WHITE);
+		}
+		
+		((ImageButton) layout.findViewById(R.id.clear)).setOnClickListener(new View.OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				nameText.setText("");
+			}
+		});
+		
+		nameText.addTextChangedListener(new TextWatcher() {
+			
+			@Override
+			public void onTextChanged(CharSequence s, int start, int before, int count) {
+				if (s.toString().equals("")) {
+					((AlertDialog)getDialog()).getButton(Dialog.BUTTON_POSITIVE).setEnabled(false);
+				} else {
+					((AlertDialog)getDialog()).getButton(Dialog.BUTTON_POSITIVE).setEnabled(true);
+				}
+				
+			}
+			
+			@Override
+			public void beforeTextChanged(CharSequence s, int start, int count,
+					int after) {
+				// TODO Auto-generated method stub
+				
+			}
+			
+			@Override
+			public void afterTextChanged(Editable s) {
+				// TODO Auto-generated method stub
+				
+			}
+		});
 		
 		return layout;
     }
@@ -110,11 +155,14 @@ public class CreateFileDialogFragment extends DialogFragment implements DialogIn
 		// TODO Auto-generated method stub
 		Log.d(TAG, "Which button: " + which);
 		switch (which) {
-		case -1:
-			//getDialog().getWindow().findViewById(id)
-			//EditText name = (EditText) getView().findViewById(R.id.name);
+		case Dialog.BUTTON_POSITIVE:
 			EditText name = (EditText) getDialog().getWindow().findViewById(R.id.name);
         	Bundle args = getArguments();
+        	String nameString = name.getText().toString();
+        	if (nameString.isEmpty()) {
+        		Toast.makeText((LinkToFileActivity) getActivity(), "File name cannot be empty", 3000);
+        		return;
+        	}
         	args.putString("name", name.getText().toString());
         	
         	CheckBox checkBox = (CheckBox) getDialog().getWindow().findViewById(R.id.addShortcut);
@@ -122,7 +170,7 @@ public class CreateFileDialogFragment extends DialogFragment implements DialogIn
         	
             ((LinkToFileActivity) getActivity()).doPositiveClick(args);
 			break;
-		case -2:
+		case Dialog.BUTTON_NEGATIVE:
 			((LinkToFileActivity) getActivity()).doNegativeClick();
 			break;
 		}

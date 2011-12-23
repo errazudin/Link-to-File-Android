@@ -17,14 +17,31 @@
 	               android:layout_height="fill_parent"
 	               android:layout_marginRight="10dp"
 	               />
-	        <EditText android:id="@+id/name"
-		        android:layout_width="fill_parent"
-		        android:layout_height="wrap_content"
-		        android:inputType="text"
-		        />
+	        <FrameLayout
+         		android:layout_width="fill_parent"
+     			android:layout_height="fill_parent"
+     			>
+		        <EditText android:id="@+id/name"
+			        android:layout_width="fill_parent"
+			        android:layout_height="wrap_content"
+			        android:inputType="text"
+			        android:paddingRight="40dp"
+			        />
+		        <ImageButton
+		            android:id="@+id/clear"      
+		            android:layout_width="wrap_content"
+		            android:layout_height="wrap_content"
+		            android:layout_gravity="right|center_vertical"
+		            android:src="@drawable/clear"
+		            android:scaleType="centerInside"
+		            android:background="@null"
+		            android:contentDescription="Clear"
+		            android:padding="10dp"
+		            />
+	        </FrameLayout>
 	    </LinearLayout>
         <CheckBox android:id="@+id/addShortcut"
-            android:text="Add shortcut to home"
+            android:text="@string/add_shortcut"
             android:checked="true"
             android:layout_width="wrap_content"
         	android:layout_height="wrap_content"

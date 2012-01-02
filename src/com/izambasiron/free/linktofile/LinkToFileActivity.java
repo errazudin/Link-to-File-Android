@@ -181,7 +181,7 @@ OnItemLongClickListener, AdListener {
         protected void onPostExecute(List<Integer> toDelete) {
         	// Remove has to be done in UI thread
         	int total = toDelete.size();
-        	for (int i = 0; i < total; i++) {
+        	for (int i = total - 1; i >= 0; i--) {
         		filesAdapter.removeItem(toDelete.get(i));
         	}
         	getActionBarHelper().setRefreshActionItemState(false);

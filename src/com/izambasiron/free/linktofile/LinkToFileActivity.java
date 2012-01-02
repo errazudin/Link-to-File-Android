@@ -1,7 +1,9 @@
 package com.izambasiron.free.linktofile;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import android.app.AlertDialog;
@@ -39,6 +41,7 @@ import com.google.ads.AdRequest;
 import com.google.ads.AdRequest.ErrorCode;
 import com.google.ads.AdSize;
 import com.google.ads.AdView;
+import com.izambasiron.free.linktofile.FilesAdapter.FileItem;
 
 public class LinkToFileActivity extends ActionBarActivity implements OnItemClickListener, 
 OnItemLongClickListener, AdListener {
@@ -69,6 +72,9 @@ OnItemLongClickListener, AdListener {
         int width = (int) (metrics.widthPixels / metrics.density);
         
         createAdView(getAdSize(width-layout.getPaddingLeft()-layout.getPaddingRight()));
+        
+        // Check if files exist
+        new CheckValidFile().execute();
     }
     
     private void createAdView(AdSize adSize) {
@@ -136,19 +142,10 @@ OnItemLongClickListener, AdListener {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case android.R.id.home:
-                //Toast.makeText(this, "Tapped home", Toast.LENGTH_SHORT).show();
                 break;
 
             case R.id.menu_refresh:
-                Toast.makeText(this, "Fake refreshing...", Toast.LENGTH_SHORT).show();
-                getActionBarHelper().setRefreshActionItemState(true);
-                getWindow().getDecorView().postDelayed(
-                        new Runnable() {
-                            @Override
-                            public void run() {
-                                getActionBarHelper().setRefreshActionItemState(false);
-                            }
-                        }, 1000);
+            	new CheckValidFile().execute();
                 break;
 
             case R.id.menu_add:
@@ -157,10 +154,38 @@ OnItemLongClickListener, AdListener {
             	action = action.setType("*/*").addCategory(Intent.CATEGORY_OPENABLE);
             	action = action.putExtra(Intent.EXTRA_LOCAL_ONLY, true);
             	startActivityForResult(Intent.createChooser(action, "Add new file"), PICK_A_FILE);
-            	
                 break;
         }
         return super.onOptionsItemSelected(item);
+    }
+    
+    private class CheckValidFile extends AsyncTask<Void, Void, List<Integer>> {
+    	protected void onPreExecute() {
+    		getActionBarHelper().setRefreshActionItemState(true);
+    	}
+    	
+        protected List<Integer> doInBackground(Void... args) {
+        	int total = filesAdapter.getCount();
+        	List<Integer> toDelete = new ArrayList<Integer>();
+        	for(int i = 0;i < total; i++) {
+        		FilesAdapter.FileItem fileItem = (FileItem) filesAdapter.getItem(i);
+        		File file = new File(fileItem.PATH);
+        		if (!file.exists()) {
+        			toDelete.add(i);
+        		}
+        	}
+        	
+            return toDelete;
+        }
+
+        protected void onPostExecute(List<Integer> toDelete) {
+        	// Remove has to be done in UI thread
+        	int total = toDelete.size();
+        	for (int i = 0; i < total; i++) {
+        		filesAdapter.removeItem(toDelete.get(i));
+        	}
+        	getActionBarHelper().setRefreshActionItemState(false);
+        }
     }
     
     protected void onActivityResult(int requestCode, int resultCode,
